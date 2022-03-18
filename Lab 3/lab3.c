@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <math.h>
 //struct declarations
 struct Node{
     int space;
@@ -114,7 +116,16 @@ void release(int PID,struct Node * addr){
         node=node->next;
     }
 }
-
+struct Node * PIDExist(int PID,struct Node * addr){
+    struct Node * node = addr;
+    while(node!=NULL){
+        if(node->PID==PID){
+            return node;
+        }
+        node=node->next;
+    }
+    return NULL;
+}
 void compact(struct Node *addr){
     struct Node * node = addr;
     struct Node * prev = NULL;
@@ -169,13 +180,16 @@ void status(struct Node *addr){
 int main(){
     float MAX_SPACE = 0;
     struct Node *head = (struct Node *)malloc(sizeof (struct Node));
-    printf("Space in MB? \n");
-    scanf("%f",&MAX_SPACE);
-
-    printf("Mode ?(f,b,w) \n");
-    //scanf("%c",&mode);
-    mode='w';
+    printf("Filling with 1MB of memory: \n");
+    //scanf("%f",&MAX_SPACE);
+    MAX_SPACE=1;
     MAX_SPACE=(int)(MAX_SPACE*1048576);
+
+    printf("Mode ?(f,b,w) ");
+    scanf("%c",&mode);
+    time_t t;
+    srand((unsigned) time(&t));
+
     struct Node * spaceAddress = (struct Node *)malloc(sizeof(struct Node)+2*MAX_SPACE);
     head->prev=NULL;
     head->next=spaceAddress;
@@ -188,6 +202,38 @@ int main(){
     spaceAddress->free=0;
     spaceAddress->address=0;
     spaceAddress->space=MAX_SPACE;
+    int freespace = MAX_SPACE;
+    while(freespace!=0){
+        int val = rand() % 25+1;
+        if(freespace-val*MINBLOCK>=0){
+            allocate(val*MINBLOCK,head);
+            status(head);
+            freespace-=val*MINBLOCK;
+        }
+    }
+    int rm =round(maxPID/10);
+    int count=0;
+    while(count<rm){
+        int PID = rand()%(maxPID+1);
+        if(PIDExist(PID,head)!=NULL&&PIDExist(PID,head)->free!=0){
+            freespace+=PIDExist(PID,head)->space;
+            release(PID,head);
+            count++;
+            status(head);
+        }
+    }
+    compact(head);
+    status(head);
+    while(freespace!=0){
+        int val = rand() % 25+1;
+        if(freespace-val*MINBLOCK>=0){
+            allocate(val*MINBLOCK,head);
+            status(head);
+            freespace-=val*MINBLOCK;
+        }
+    }
+
+    /*
     allocate(MINBLOCK,head);
     allocate(MINBLOCK*10,head);
     allocate(MINBLOCK*2,head);
@@ -218,5 +264,6 @@ int main(){
     compact(head);
     status(head);
     printf("Done\n");
+    */
     return 0;
 }
