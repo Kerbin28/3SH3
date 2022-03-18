@@ -84,7 +84,7 @@ void allocate(int memory,struct Node * addr){
         }
         node=node->next;
         }
-        if(worst==addr->next||node->space>worst->space){
+        if(worst==addr->next||(node->space>worst->space&&node->free==0)){
             worst=node;
         }
         if(!worst->free&&worst->space>memory){
@@ -123,35 +123,36 @@ void compact(struct Node *addr){
 
     while(node!=NULL){
         if(!(node->free)){
-            freemem += node->space;  
+            freemem += node->space;
             if(node->next!=NULL){
-                struct Node * temp = node;
-                node->next->address=prev->address+prev->space;
-                node=node->next;
-                node->prev=prev;
-                prev->next=node;
-            }                    
+                node=prev;
+                if(node->next->next!=NULL){
+                    node->next=node->next->next;
+                    node->next->prev=node;
+                    node->next->address=node->space+node->address;
+                }
+               
+            }
+             else{
+                    prev=node->prev;
+                    break;
+                }
+                                  
         }
         prev=node;
         node=node->next;
         
-    }  
-    node = prev;
-    if(!(node->free)) {
-        node->address=node->prev->address+node->prev->space;
-        node->space=freemem;
-    }
-    else{
-    struct Node * freeSpace = (struct Node *)((char *)prev+prev->space/sizeof(struct Node));
-    node->next=freeSpace;
+    }   
+    struct Node * freeSpace = (struct Node *)((char *)prev+prev->space);    
+    prev->next=freeSpace;
     freeSpace->free=0;
     freeSpace->next=NULL;
-    freeSpace->prev=node;
-    freeSpace->address=node->address+node->space;
+    freeSpace->prev=prev;
+    freeSpace->address=prev->address+prev->space;
     freeSpace->PID=++maxPID;
     freeSpace->space=freemem;
-    }
-}
+
+}   
 void status(struct Node *addr){
     printf("----------\n");
     struct Node * node = addr;
@@ -175,7 +176,7 @@ int main(){
     //scanf("%c",&mode);
     mode='w';
     MAX_SPACE=(int)(MAX_SPACE*1048576);
-    struct Node * spaceAddress = (struct Node *)malloc(sizeof(struct Node)+MAX_SPACE);
+    struct Node * spaceAddress = (struct Node *)malloc(sizeof(struct Node)+2*MAX_SPACE);
     head->prev=NULL;
     head->next=spaceAddress;
     head->PID=-1;
@@ -192,7 +193,6 @@ int main(){
     allocate(MINBLOCK*2,head);
     allocate(MINBLOCK*5,head);
     status(head);
-    
     release(1,head);
     status(head);
     allocate(MINBLOCK*12,head);
@@ -202,11 +202,10 @@ int main(){
     status(head);
     allocate(MINBLOCK,head);
     status(head);
-    
-    
+
+    compact(head);
     status(head);
-    allocate(987136,head);
-    
+    allocate(921600,head);  
     status(head);
     release(2,head);
     status(head);
