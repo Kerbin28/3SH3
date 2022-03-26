@@ -53,19 +53,14 @@ printf("\n");
         printf("---");
     }
     printf("\n");
-    for(int i=0;i<len;i++){
-        printf("%3d",outputs[i][0]);
+    for(int j=0;j<M;j++){
+        for(int i=0;i<len;i++){
+        printf("%3d",outputs[i][j]);
     }
         printf("\n");
-    for(int i=0;i<len;i++){
-        printf("%3d",outputs[i][1]);
     }
-
-    printf("\n");
-    for(int i=0;i<len;i++){
-        printf("%3d",outputs[i][2]);
-    }
-    printf("\n");
+    
+   
     int faults=0;
     for(int i=0;i<len;i++){
         printf("%3c",pageFault[i]);
