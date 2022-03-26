@@ -11,12 +11,36 @@ int findPage(int *arr,int len,int page){
     }
     return 0;
 }
+int findLRU(int *arr,int len,int *frames,int M,int index){
+    int minIndex=INT_MAX;
+    int min=INT_MAX;
+    int minMinIndex=INT_MAX;
+
+    for (int i=0;i<M;i++){
+        int flag=0;
+        for(int j=index;j>=0;j--){
+            if(arr[j]==frames[i]){
+                minIndex=j;
+                if(minMinIndex>minIndex){
+                    minMinIndex=minIndex;
+                    min=i;
+                }
+                flag=1;
+                break;
+            }
+        }
+        if(!flag){
+            return i;
+        }
+    }
+    return min;
+}
 int indexPage(int *arr,int len,int page,int index){
-    int arrVal[len-index];
-    for(int i=index+1;i<len;i++){
+    int arrVal[len];
+    for(int i=0;i<len;i++){
         arrVal[i]=arr[i];
     }
-    for(int i=0;i<len;i++){
+    for(int i=index+1;i<len;i++){
         if(arrVal[i]==page){
             return i;
         }
@@ -42,11 +66,19 @@ printf("\n");
         printf("%3d",outputs[i][2]);
     }
     printf("\n");
+    int faults=0;
     for(int i=0;i<len;i++){
         printf("%3c",pageFault[i]);
+        if(pageFault[i]=='P'){
+            faults++;
+        }
     }
 
     printf("\n");
+    for(int i=0;i<len;i++){
+        printf("---");
+    }
+    printf("\n%3d page-faults\n",faults);
 }
 void calculateFIFO(int *vals,int len,int N, int M){
     printf("  ");
@@ -122,6 +154,40 @@ void calculateOptimal(int *vals,int len,int N, int M){
     }
     printOutput(len,M,pageFault,outputs);
 }
+void calculateLRU(int *vals,int len,int N, int M){
+    printf("  ");
+    int outputs[len][M];
+    char pageFault[len];
+    int frame[M];
+    int values[len];
+    for(int i=0;i<len;i++){
+        values[i]=vals[i];
+    }
+    for(int i=0;i<M;i++){
+        frame[i]=-1;
+    }
+
+    for(int i=0;i<len;i++){
+        printf("%d  ",vals[i]);
+        if(values[i]<=N&&findPage(frame,M,values[i])){
+            for(int j=0;j<M;j++){
+                outputs[i][j]=frame[j]; 
+            }
+            pageFault[i]=' ';            
+        }
+        else if(!findPage(frame,M,values[i])){
+             int pageIndex=INT_MAX;
+            int frameIndex=0;
+            frameIndex=findLRU(values,len,frame,M,i);
+            frame[frameIndex]=values[i];
+            for(int j=0;j<M;j++){
+                outputs[i][j]=frame[j]; 
+            }
+            pageFault[i]='P';
+        }
+    }
+    printOutput(len,M,pageFault,outputs);
+}
 int main(){
     char *token;
     int N = 0;
@@ -155,6 +221,8 @@ int main(){
     calculateFIFO(valArr,numVals,N,M);
     printf("\n");
     calculateOptimal(valArr,numVals,N,M);
+    printf("\n");
+    calculateLRU(valArr,numVals,N,M);
     fclose(file);
 
     return 0;
